@@ -5,6 +5,7 @@ import { getDatabase } from 'firebase/database'
 const firebaseConfig = {
   apiKey: "AIzaSyALxf2nemEXmyYqVqVfMg5QZ-ob9xucvsg",
   authDomain: "chatty-c10aa.firebaseapp.com",
+  databaseURL: "https://chatty-c10aa-default-rtdb.firebaseio.com/",
   projectId: "chatty-c10aa",
   storageBucket: "chatty-c10aa.appspot.com",
   messagingSenderId: "331388915678",

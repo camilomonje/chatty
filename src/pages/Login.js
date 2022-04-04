@@ -9,7 +9,7 @@ export default function Login() {
   })
   const [error, setError] = useState("")
 
-  const {signup} = useAuth()
+  const {login, loginWithGmail, loginWithGitHub} = useAuth()
   const navigate = useNavigate()
 
   const handleChange = ({target: {name, value}}) => {
@@ -20,11 +20,31 @@ export default function Login() {
       e.preventDefault()
       setError("")
       try {
-        await signup(user.email, user.password)
+        await login(user.email, user.password)
          navigate("/chat")
       }catch (error) {
         setError(error.code)
       }
+  }
+
+  const handleLoginWithGoogle = async () => {
+    setError("")
+    try {
+      await loginWithGmail(user.email, user.password)
+       navigate("/chat")
+    }catch (error) {
+      setError(error.code)
+    }
+  }
+
+  const handleLoginWithGithub = async () => {
+    setError("")
+    try {
+      await loginWithGitHub(user.email, user.password)
+       navigate("/chat")
+    }catch (error) {
+      setError(error.code)
+    }
   }
 
   return (
@@ -50,6 +70,8 @@ export default function Login() {
             Don't have an account? <Link to="/signup">Sign up</Link>
           </p>
         </form>
+        <button onClick={handleLoginWithGoogle}>Login with Google</button>
+        <button onClick={handleLoginWithGithub}>Login with Github</button>
     </div>
   )
 }
