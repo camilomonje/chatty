@@ -1,29 +1,30 @@
 import { useState, useEffect } from "react";
-import { auth, db } from "../services/firebase";
-import { ref, onValue, set } from "firebase/database";
+import { db } from "../services/firebase";
+import { ref,  push, get } from "firebase/database";
+import { useAuth } from "../context/authContext";
 
 export default function Chat() {
-  const [user, setUser] = useState(auth.currentUser);
-  const [chats, setChats] = useState("");
+    const {user} = useAuth()
+
+  const [chats, setChats] = useState([]);
   const [content, setContent] = useState("");
   const [error, setError] = useState(null);
-  const [writeError, setWriteError] = useState(null);
   const [loadingChats, setLoadingChats] = useState(true);
 
   function getChats() {
-    setError(null);
+    setError(null); 
 
-    try {
-      const startCountRef = ref(db, "chats/");
-      onValue(startCountRef, (snapshot) => {
-        const data = snapshot.val();
-        setChats(data);
-        setLoadingChats(!loadingChats);
+    get(ref(db, "chats"))
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+    
+          console.log(Object.values(snapshot.val()));
+          setChats(Object.values(snapshot.val()));
+        }
+      })
+      .catch((error) => {
+        alert("error " + error);
       });
-      console.log(chats);
-    } catch (error) {
-      setContent(error.target.value);
-    }
   }
 
   const handleOnChange = (e) => {
@@ -36,43 +37,29 @@ export default function Chat() {
     if (!content) {
       return;
     }
-    setWriteError(null);
 
-    try {
-      set(ref(db, "chats/" + Date.now()), {
-        content: content,
-        timestamp: Date.now,
-        uid: user.uid,
+
+    push(ref(db, "chats"), {
+      content: content,
+      timestamp: Date.now(),
+      uid: user.uid,
+    })
+      .then((a) => {
+        setContent("");
+      })
+      .catch((error) => {
+        alert("error: " + error);
       });
-      setContent("");
-    } catch (e) {
-      setWriteError(e.message);
-    }
+      getChats();
   };
 
   useEffect(() => {
-    setLoadingChats(!loadingChats);
+    setLoadingChats(false);
     getChats();
   }, []);
 
-  const Push = () => {
-    try {
-      set(ref("user"), {
-        name: "camilo",
-        age: 24,
-      });
-    } catch (error) {
-      console.log(error.code);
-    }
-
-    //   db.ref("user").set({
-    //       name : "camilo",
-    //       age: 24
-    //   }).catch(alert)
-  };
-
   return (
-    <div>
+    <div className="chat">
       <div className="chat-area">
         {loadingChats ? (
           <div className="spinner-border text-success" role="status">
@@ -81,27 +68,40 @@ export default function Chat() {
         ) : (
           ""
         )}
-
-        <button onClick={Push}>Push</button>
-        {/* {chats&&
-        chats.map((chat) => {
-                    return (
-                        <p key={chat.timestamp}
-                            className={
-                                "chat-bubble " +
-                                (user.uid === chat.uid ? "current-user" : "")
-                            }
-                        >
-                            <br />
-                            {chat.content}
-                            <br />
-                            <span className="chat-time float-right">
-                                {this.formatTime(chat.timestamp)}
-                            </span>
-                        </p>
-                    );
-                })} */}
+        {/* chat area */}
+        {chats&&chats.map((chat) => {
+          return (
+            <p
+              key={chat.timestamp}
+              className={
+                "chat-bubble " + (user.uid === chat.uid ? "current-user" : "")
+              }
+            >
+              <br />
+              {chat.content}
+              <br />
+              <span className="chat-time float-right">
+                {(chat.timestamp)}
+              </span>
+            </p>
+          );
+        })}
       </div>
+      <div className="py-5 mx-3">
+        Login in as: <strong className="text-info">{user.email}</strong>
+      </div>
+      <form onSubmit={handleSubmit} className="mx-3">
+        <textarea
+          className="form-control"
+          name="content"
+          onChange={handleOnChange}
+          value={content}
+        ></textarea>
+        {error ? <p className="text-danger">{error}</p> : null}
+        <button className="btn btn-primary px-3 mt-2" type="submit">
+          Enviar
+        </button>
+      </form>
     </div>
   );
 }
